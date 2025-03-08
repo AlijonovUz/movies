@@ -1,15 +1,15 @@
 from rest_framework import generics, status, permissions
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
-from django.contrib.auth.models import User
+from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .serializers import RegisterSerializer, LogoutSerializer
+from .serializers import RegisterSerializer, LoginSerializer, LogoutSerializer
 from .permissions import IsNotAuthenticated
-from .models import BlacklistedAccessToken
+from .models import BlacklistedAccessToken, MyUser
 
 
 class RegisterView(generics.CreateAPIView):
-    queryset = User
+    queryset = MyUser
     serializer_class = RegisterSerializer
     permission_classes = [IsNotAuthenticated]
 
@@ -23,6 +23,10 @@ class RegisterView(generics.CreateAPIView):
             'error': None,
             'success': True
         }, status=status.HTTP_200_OK)
+
+
+class LoginView(TokenObtainPairView):
+    serializer_class = LoginSerializer
 
 
 class LogoutView(generics.GenericAPIView):
@@ -46,6 +50,3 @@ class LogoutView(generics.GenericAPIView):
             'error': None,
             'success': True
         }, status=status.HTTP_200_OK)
-
-
-

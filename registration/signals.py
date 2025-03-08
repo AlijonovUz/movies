@@ -2,13 +2,14 @@ from datetime import datetime
 
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
-from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.conf import settings
 
+from registration.models import MyUser
 
-@receiver(post_save, sender=User)
+
+@receiver(post_save, sender=MyUser)
 def sendMail(sender, created, instance, **kwargs):
     if created:
         subject = "Ro'yxatdan o'tganingiz uchun rahmat!"

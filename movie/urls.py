@@ -17,7 +17,6 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
     TokenRefreshView,
     TokenVerifyView
 )
@@ -34,12 +33,11 @@ urlpatterns = [
     path('auth/', include('registration.urls')),
 
     # jwt (Json Web Token) urls
-    path('auth/login/', TokenObtainPairView.as_view(), name='login'),
-    path('auth/login/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('auth/login/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+    path('auth/login/token/refresh/', TokenRefreshView.as_view()),
+    path('auth/login/token/verify/', TokenVerifyView.as_view()),
 
     # developer
-    path('developers/', schema_view.with_ui('swagger', cache_timeout=0), name='developers'),
+    path('developers/', schema_view.with_ui('swagger', cache_timeout=0)),
 ]
 
 if settings.DEBUG:

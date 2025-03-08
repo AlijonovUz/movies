@@ -80,6 +80,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'movie.wsgi.application'
+AUTH_USER_MODEL = 'registration.MyUser'
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
@@ -97,12 +98,12 @@ DATABASES = {
 REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': "api.exceptions.exception",
 
-    'DEFAULT_RENDERER_CLASSES': [
-        'rest_framework.renderers.JSONRenderer',
-    ],
-    'DEFAULT_PARSER_CLASSES': [
-        'rest_framework.parsers.JSONParser',
-    ],
+    # 'DEFAULT_RENDERER_CLASSES': [
+    #     'rest_framework.renderers.JSONRenderer',
+    # ],
+    # 'DEFAULT_PARSER_CLASSES': [
+    #     'rest_framework.parsers.JSONParser',
+    # ],
 
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
