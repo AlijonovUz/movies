@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
 
+    'django_celery_results',
     'django_filters',
     'drf_yasg',
 ]
@@ -81,6 +82,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'movie.wsgi.application'
 AUTH_USER_MODEL = 'registration.MyUser'
+
+# CELERY SETTINGS
+
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Asia/Tashkent'
+
+CELERY_RESULT_BACKEND = 'django-db'
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
@@ -190,6 +201,6 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_USE_TLS = True
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'alijonov.me@gmail.com'
-EMAIL_HOST_PASSWORD = 'ufet xsrs qdid brvk'
-DEFAULT_FROM_EMAIL = "MovieHub <alijonov.me@gmail.com>"
+EMAIL_HOST_USER = 'YOUR EMAIL'
+EMAIL_HOST_PASSWORD = 'YOUR HOST PASSWORD'
+DEFAULT_FROM_EMAIL = f"MovieHub <{EMAIL_HOST_USER}>"

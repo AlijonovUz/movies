@@ -1,32 +1,27 @@
-from datetime import datetime
-
-from django.core.mail import EmailMultiAlternatives
-from django.template.loader import render_to_string
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.conf import settings
 
 from registration.models import MyUser
+from .tasks import send_welcome_mail
 
 
 @receiver(post_save, sender=MyUser)
-def sendMail(sender, created, instance, **kwargs):
+def send_mail_movie(sender, created, instance, **kwargs):
     if created:
         subject = "Ro'yxatdan o'tganingiz uchun rahmat!"
-        from_email = settings.DEFAULT_FROM_EMAIL
-
-        recipient_list = [instance.email]
-
-        html_content = render_to_string('emails/index.html',{
-            'username': instance.username,
-            'current_year': datetime.now().year
-        })
-
-        email = EmailMultiAlternatives(
-            subject=subject,
-            from_email=from_email,
-            to=recipient_list
+        message = (
+            "Assalomu alaykum, hurmatli foydalanuvchi!\n\n"
+            "Sizni bizning platformamizga qo‘shilganingiz bilan tabriklaymiz! 🎉\n"
+            "Umid qilamizki, saytimiz siz uchun foydali va qulay bo‘ladi.\n\n"
+            "Agar biron savollaringiz bo‘lsa yoki qo‘llab-quvvatlash kerak bo‘lsa, "
+            "biz bilan bog‘lanishingiz mumkin.\n"
+            "Sizga ajoyib tajriba va muvaffaqiyat tilaymiz!\n\n"
+            "Hurmat bilan,\n"
+            "MovieHub jamoasi"
         )
 
-        email.attach_alternative(html_content, 'text/html')
-        email.send(fail_silently=True)
+        from_email = settings.DEFAULT_FROM_EMAIL
+        recipient_list = [instance.email]
+
+        send_welcome_mail.delay(subject, message, from_email, recipient_list)
