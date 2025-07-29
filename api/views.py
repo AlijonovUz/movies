@@ -5,6 +5,7 @@ from rest_framework.response import Response
 
 from .permissions import IsAdminOrReadOnly
 from .serializers import *
+from .filters import MovieFilter
 from .models import *
 
 
@@ -32,7 +33,7 @@ class MovieViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSerializer
 
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    filterset_fields = ['genre']
+    filterset_class = MovieFilter
     search_fields = ['name']
     lookup_field = 'slug'
     throttle_scope = 'movie'

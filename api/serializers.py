@@ -22,6 +22,12 @@ class GenreSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class MovieURLSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MovieURL
+        fields = ['title', 'type', 'part', 'embed_url']
+
+
 class MovieSerializer(serializers.ModelSerializer):
     class Meta:
         model = Movies
@@ -43,5 +49,6 @@ class MovieSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
 
         data['genre'] = GenreSerializer(instance.genre.all(), many=True).data
+        data['video_items'] = MovieURLSerializer(instance.movie_url.all(), many=True).data
 
         return data
