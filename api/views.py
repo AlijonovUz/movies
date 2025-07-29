@@ -3,14 +3,13 @@ from rest_framework import viewsets, status, permissions, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .permissions import IsAdminOrReadOnly
-from .serializers import *
+from .serializers import GenreSerializer, MovieSerializer, CountrySerializer
 from .filters import MovieFilter
-from .models import *
+from .models import Genre, Country, Movie, MovieReaction
 
 
 class GenreViewSet(viewsets.ModelViewSet):
-    queryset = Genres.objects.all()
+    queryset = Genre.objects.all()
     serializer_class = GenreSerializer
 
     filter_backends = [filters.SearchFilter]
@@ -28,8 +27,18 @@ class GenreViewSet(viewsets.ModelViewSet):
         }, status=status.HTTP_200_OK)
 
 
+class CountryViewSet(viewsets.ModelViewSet):
+    queryset = Country.objects.all()
+    serializer_class = CountrySerializer
+
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name']
+    lookup_field = 'slug'
+    throttle_scope = 'country'
+
+
 class MovieViewSet(viewsets.ModelViewSet):
-    queryset = Movies.objects.all()
+    queryset = Movie.objects.all()
     serializer_class = MovieSerializer
 
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]

@@ -8,7 +8,7 @@ from django.db import models
 from registration.models import MyUser
 
 
-class Genres(models.Model):
+class Genre(models.Model):
     name = models.CharField(max_length=150, unique=True, verbose_name="Nomi")
     slug = models.SlugField(max_length=150, unique=True, verbose_name="Identifikatori")
 
@@ -20,13 +20,41 @@ class Genres(models.Model):
         verbose_name_plural = 'Janrlar'
 
 
-class Movies(models.Model):
+class Country(models.Model):
+    name = models.CharField(max_length=150, unique=True, verbose_name="Nomi")
+    slug = models.SlugField(max_length=150, unique=True, verbose_name="Identifikatori")
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'Mamlakat '
+        verbose_name_plural = 'Mamlakatlar'
+
+
+AGE_LIMITS = [
+    ('0+', '0+'),
+    ('6+', '6+'),
+    ('12+', '12+'),
+    ('16+', '16+'),
+    ('18+', '18+')
+]
+
+LANGUAGE_CHOICES = [
+    ('O\'zbek tilida', "O'zbek tilida"),
+    ('Rus tilida', "Rus tilida"),
+    ('Ingliz tilida', "Ingliz tilida")
+]
+
+
+class Movie(models.Model):
     title = models.CharField(max_length=150, unique=True, verbose_name="Sarlavhasi")
     slug = models.SlugField(max_length=150, unique=True, verbose_name="Identifikatori")
 
     description = models.TextField(null=True, blank=True, verbose_name="Tavsifi")
+    country = models.ForeignKey(Country, on_delete=models.CASCADE, related_name='movies', verbose_name='Mamlakati')
     duration = models.CharField(max_length=30, default="1 soat 59 daqiqa 59 soniya", verbose_name="Davomiyligi")
-    language = models.CharField(max_length=15, default='O\'zbek tilida', verbose_name="Tili")
+    language = models.CharField(max_length=15, choices=LANGUAGE_CHOICES, verbose_name="Tili")
     year = models.PositiveIntegerField(default=datetime.now().year,
                                        validators=[
                                            MinValueValidator(1900),
@@ -34,12 +62,14 @@ class Movies(models.Model):
                                        ],
                                        verbose_name="Yili")
 
+    age_limit = models.CharField(max_length=3, choices=AGE_LIMITS, verbose_name="Yosh chegarasi")
+
     like = models.PositiveIntegerField(default=0, validators=[MinValueValidator(0)], verbose_name="Yoqtirishlar")
     dislike = models.PositiveIntegerField(default=0, validators=[MinValueValidator(0)], verbose_name="Yoqtirmasliklar")
     view = models.PositiveIntegerField(default=0, validators=[MinValueValidator(0)], verbose_name="Ko'rishlar")
 
     photo = models.ImageField(upload_to='movies/', verbose_name="Surati")
-    genre = models.ManyToManyField(Genres, related_name='movies', verbose_name="Janri")
+    genre = models.ManyToManyField(Genre, related_name='movies', verbose_name="Janri")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Qo'shilgan vaqti")
 
     def __str__(self):
@@ -78,7 +108,7 @@ class MovieURL(models.Model):
     )
 
     embed_url = models.URLField("Tozalangan URL", editable=False)
-    movie = models.ForeignKey(Movies, on_delete=models.CASCADE, related_name='movie_url', verbose_name="FIlmi")
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='movie_url', verbose_name="FIlmi")
 
     def clean(self):
         value = self.embed_input.strip()
@@ -102,11 +132,6 @@ class MovieURL(models.Model):
             if not value.startswith('https://'):
                 raise ValidationError({
                     "embed_input": "URL manzili noto'g'ri kiritildi."
-                })
-
-            if 'embed' not in value:
-                raise ValidationError({
-                    'embed_input': "Faqat iframe tegi ichidagi `src` manzili (video URL) kiritilishi kerak."
                 })
         else:
             if not value.startswith('https://'):
@@ -132,4 +157,4 @@ class MovieURL(models.Model):
 class MovieReaction(models.Model):
     reaction = models.CharField(max_length=7)
     user = models.ForeignKey(MyUser, on_delete=models.SET_NULL, null=True)
-    movie = models.ForeignKey(Movies, on_delete=models.CASCADE)
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE)

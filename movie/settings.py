@@ -46,7 +46,6 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
 
-    'django_celery_results',
     'django_filters',
     'drf_yasg',
 ]
@@ -83,16 +82,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'movie.wsgi.application'
 AUTH_USER_MODEL = 'registration.MyUser'
 
-# CELERY SETTINGS
-
-CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
-CELERY_ACCEPT_CONTENT = ['application/json']
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'Asia/Tashkent'
-
-CELERY_RESULT_BACKEND = 'django-db'
-
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
@@ -123,16 +112,13 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'api.pagination.CustomPagination',
     'PAGE_SIZE': 10,
 
-    'DEFAULT_PERMISSION_CLASSES': [
-        'api.permissions.IsAdminOrReadOnly',
-    ],
-
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.ScopedRateThrottle',
     ],
 
     'DEFAULT_THROTTLE_RATES': {
         'genre': '60/minute',
+        'country': '60/minute',
         'movie': '60/minute',
     }
 }

@@ -1,10 +1,11 @@
 from rest_framework import routers
 
-from .views import *
+from .views import GenreViewSet, CountryViewSet, MovieViewSet
 
 router = routers.DefaultRouter()
 
-router.register('genres', GenreViewSet)
-router.register('movies', MovieViewSet)
+router.register('genre', GenreViewSet)
+router.register('country', CountryViewSet)
+router.register('movie', MovieViewSet)
 
 urlpatterns = router.urls
