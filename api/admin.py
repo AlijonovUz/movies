@@ -1,4 +1,5 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.shortcuts import redirect
 
 from .models import Genre, Country, Movie, MovieURL
 
@@ -83,3 +84,34 @@ class MovieAdmin(admin.ModelAdmin):
                 blank_choice=[("", "Tanlang")]
             )
         return super().formfield_for_choice_field(db_field, request, **kwargs)
+
+    def add_view(self, request, form_url='', extra_context=None):
+        genres_exist = Genre.objects.exists()
+        countries_exist = Country.objects.exists()
+
+        if not genres_exist and not countries_exist:
+            messages.warning(
+                request,
+                "Diqqat! Siz hali hech qanday Janrlar va Mamlakatlar qo‘shmagansiz. "
+                "Avval ularni yaratib, keyin film qo‘shishni tavsiya qilamiz."
+            )
+            return redirect("admin:index")
+
+        if not genres_exist:
+            messages.warning(
+                request,
+                "Diqqat! Siz hali hech qanday Janrlar qo‘shmagansiz. "
+                "Avval ularni yaratib, keyin film qo‘shishni tavsiya qilamiz."
+            )
+
+            return redirect("admin:index")
+        elif not countries_exist:
+            messages.warning(
+                request,
+                "Diqqat! Siz hali hech qanday Mamlakatlar qo‘shmagansiz. "
+                "Avval ularni yaratib, keyin film qo‘shishni tavsiya qilamiz."
+            )
+
+            return redirect("admin:index")
+
+        return super().add_view(request, form_url, extra_context)

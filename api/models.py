@@ -1,11 +1,10 @@
 import re
-from datetime import datetime, timedelta
+from datetime import datetime
 
+from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
 from django.db import models
-
-from registration.models import MyUser
 
 
 class Genre(models.Model):
@@ -156,5 +155,5 @@ class MovieURL(models.Model):
 
 class MovieReaction(models.Model):
     reaction = models.CharField(max_length=7)
-    user = models.ForeignKey(MyUser, on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     movie = models.ForeignKey(Movie, on_delete=models.CASCADE)

@@ -36,8 +36,8 @@ urlpatterns = [
     path('auth/login/token/refresh/', TokenRefreshView.as_view()),
     path('auth/login/token/verify/', TokenVerifyView.as_view()),
 
-    # developer
-    path('developers/', schema_view.with_ui('swagger', cache_timeout=0)),
+    # docs
+    path('docs/', schema_view.with_ui('swagger', cache_timeout=0)),
 ]
 
 if settings.DEBUG:
