@@ -187,7 +187,7 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_USE_TLS = True
 EMAIL_PORT = 587
 EMAIL_HOST_USER = 'alijonov.me@gmail.com'
-EMAIL_HOST_PASSWORD = 'frkj wnwn dcdp ziou'
+EMAIL_HOST_PASSWORD = 'YOUR EMAIL HOST PASSWORD'
 DEFAULT_FROM_EMAIL = f"MovieHub <{EMAIL_HOST_USER}>"
 
 # email verification and password reset timeout
