@@ -1,10 +1,53 @@
 import re
 
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
+
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from registration.utils import send_verification_email
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'is_active']
+        read_only_fields = ['id', 'email', 'is_active']
+        extra_kwargs = {
+            'username': {'required': False},
+            'first_name': {'required': False},
+            'last_name': {'required': False},
+        }
+
+    def validate_username(self, value):
+        if self.instance and self.instance.username == value:
+            return value
+
+        if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]{2,29}$', value):
+            raise serializers.ValidationError("Username must be 3–30 characters, start with a letter or underscore, "
+                                              "and use only letters, numbers, or underscores.")
+
+        if User.objects.filter(username__iexact=value).exists():
+            raise serializers.ValidationError("A user with that username already exists.")
+
+        return value
+
+    def _validate_alpha_field(self, field_name, value):
+        if not value.isalpha():
+            raise serializers.ValidationError(
+                f"{field_name} must contain alphabetic characters only. No digits or symbols allowed."
+            )
+        return value
+
+    def validate(self, attrs):
+        if 'first_name' in attrs:
+            self._validate_alpha_field("First name", attrs['first_name'])
+        if 'last_name' in attrs:
+            self._validate_alpha_field("Last name", attrs['last_name'])
+
+        return attrs
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -13,7 +56,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password1', 'password2']
+        fields = ['username', 'first_name', 'last_name', 'email', 'password1', 'password2']
         extra_kwargs = {
             'email': {
                 'required': True,
@@ -24,13 +67,11 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def validate_username(self, value):
         if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]{2,29}$', value):
-            raise serializers.ValidationError(
-                "Username must start with a letter or underscore, "
-                "and be 3–30 characters long, using only letters, numbers, or underscores."
-            )
+            raise serializers.ValidationError("Username must be 3–30 characters, start with a letter or underscore, "
+                                              "and use only letters, numbers, or underscores.")
 
-        if User.objects.filter(username=value).exists():
-            raise serializers.ValidationError("This username is already in use.")
+        if User.objects.filter(username__iexact=value).exists():
+            raise serializers.ValidationError("A user with that username already exists.")
 
         return value
 
@@ -43,29 +84,30 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         return value
 
+    def _validate_alpha_field(self, field_name, value):
+        key = field_name.lower().replace(" ", "_")
+        if not value.isalpha():
+            raise serializers.ValidationError({
+                key: f"{field_name} must contain alphabetic characters only. No digits or symbols allowed."
+            })
+        return value
+
     def validate(self, attrs):
         password1 = attrs.get("password1")
         password2 = attrs.get("password2")
+
+        self._validate_alpha_field("First name", attrs['first_name'])
+        self._validate_alpha_field("Last name", attrs['last_name'])
 
         if password1 != password2:
             raise serializers.ValidationError({
                 'password': "Passwords do not match."
             })
 
-        if not re.search(r'[A-Z]', password1):
-            raise serializers.ValidationError({
-                'password': "Password must contain at least one uppercase letter."
-            })
-
-        if not re.search(r'[a-z]', password1):
-            raise serializers.ValidationError({
-                'password': "Password must contain at least one lowercase letter."
-            })
-
-        if not re.search(r'\d', password1):
-            raise serializers.ValidationError({
-                'password': "Password must contain at least one digit."
-            })
+        try:
+            validate_password(attrs['password1'], user=None)
+        except DjangoValidationError as e:
+            raise serializers.ValidationError({'password': e.messages})
 
         return attrs
 
@@ -98,7 +140,7 @@ class LoginSerializer(TokenObtainPairSerializer):
             })
 
         try:
-            user = User.objects.get(username=username)
+            user = User.objects.get(username__iexact=username)
         except User.DoesNotExist:
             raise serializers.ValidationError({
                 'username': "This username is not registered."
@@ -135,8 +177,48 @@ class LoginSerializer(TokenObtainPairSerializer):
         }
 
 
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(min_length=8, max_length=128, write_only=True,
+                                         style={'input_type': 'password'})
+    new_password = serializers.CharField(min_length=8, max_length=128, write_only=True,
+                                         style={'input_type': 'password'})
+    confirm_new_password = serializers.CharField(min_length=8, max_length=128, write_only=True,
+                                                 style={'input_type': 'password'})
+
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Old password is incorrect.")
+        return value
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['confirm_new_password']:
+            raise serializers.ValidationError({
+                'password': "New password fields didn't match."
+            })
+        if attrs['old_password'] == attrs['new_password']:
+            raise serializers.ValidationError({
+                'password': "New password must be different from the old one."
+            })
+
+        try:
+            validate_password(attrs['new_password'], user=self.context['request'].user)
+        except DjangoValidationError as e:
+            raise serializers.ValidationError({'password': e.messages})
+
+        return attrs
+
+    def save(self, **kwargs):
+        user = self.context['request'].user
+        user.set_password(self.validated_data['new_password'])
+        user.save()
+        return user
+
+
 class LogoutSerializer(serializers.Serializer):
     refresh = serializers.CharField()
+
+    # TODO: Implement token blacklisting logic in the view (e.g., add refresh to blacklist)
 
 
 class ResendVerificationEmailSerializer(serializers.Serializer):

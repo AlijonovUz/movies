@@ -3,7 +3,6 @@ from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
 
 from rest_framework import generics, status, permissions
-from rest_framework.generics import CreateAPIView
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
@@ -12,6 +11,42 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import *
 from .permissions import IsNotAuthenticated
 from .models import BlacklistedAccessToken
+
+
+class UserView(generics.RetrieveUpdateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = UserSerializer
+
+    def get_object(self):
+        return self.request.user
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response({
+            'data': serializer.data,
+            'error': None,
+            'success': True
+        })
+
+    def _save_and_respond(self, request, partial):
+        serializer = self.get_serializer(self.get_object(), data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        response_data = {
+            'data': serializer.data,
+            'error': None,
+            'success': True
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    def update(self, request, *args, **kwargs):
+        return self._save_and_respond(request, partial=False)
+
+    def partial_update(self, request, *args, **kwargs):
+        return self._save_and_respond(request, partial=True)
 
 
 class RegisterView(generics.CreateAPIView):
@@ -109,7 +144,7 @@ class VerifyEmailView(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ResendVerificationEmailView(CreateAPIView):
+class ResendVerificationEmailView(generics.CreateAPIView):
     serializer_class = ResendVerificationEmailSerializer
     permission_classes = [IsNotAuthenticated]
 
@@ -131,3 +166,24 @@ class ResendVerificationEmailView(CreateAPIView):
         request = self.request
 
         send_verification_email(user, request)
+
+
+class ChangePasswordView(generics.GenericAPIView):
+    serializer_class = ChangePasswordSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        refresh = RefreshToken.for_user(user)
+
+        return Response({
+            'data': {
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
+                'message': "Password successfully changed."
+            },
+            'error': None,
+            'success': True
+        }, status=status.HTTP_200_OK)

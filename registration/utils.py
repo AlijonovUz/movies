@@ -19,7 +19,7 @@ def send_verification_email(user, request):
     email = [user.email]
     subject = "Elektron pochtangizni tasdiqlang!"
     message = (
-        f"Assalomu alaykum, {user.username}!\n\n"
+        f"Assalomu alaykum, {user.first_name} {user.last_name}!\n\n"
         f"Siz bizning platformamizda ro'yxatdan o'tdingiz.\n"
         f"Ro'yxatdan o'tishni yakunlash va hisobingizni faollashtirish uchun quyidagi havolani bosing:\n\n"
         f"{verify_url}\n\n"

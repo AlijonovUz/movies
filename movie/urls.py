@@ -24,17 +24,28 @@ from rest_framework_simplejwt.views import (
 from django.contrib import admin
 from django.urls import path, include
 
+from registration.views import (UserView, ChangePasswordView,
+                                ResendVerificationEmailView, VerifyEmailView)
+
 from .swagger import schema_view
 
 urlpatterns = [
     # main urls
     path('admin/', admin.site.urls),
     path('api/v1/', include('api.urls')),
-    path('auth/', include('registration.urls')),
 
-    # jwt (Json Web Token) urls
+    # auth
+    path('auth/', include('registration.urls')),
     path('auth/login/token/refresh/', TokenRefreshView.as_view()),
     path('auth/login/token/verify/', TokenVerifyView.as_view()),
+
+    # account settings
+    path('account/settings/profile/', UserView.as_view()),
+    path('account/settings/change-password/', ChangePasswordView.as_view()),
+
+    # verify
+    path('account/verify/resend/', ResendVerificationEmailView.as_view()),
+    path('account/verify/<uidb64>/<token>/', VerifyEmailView.as_view(), name='verify-email'),
 
     # docs
     path('docs/', schema_view.with_ui('swagger', cache_timeout=0)),
